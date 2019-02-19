@@ -4,7 +4,9 @@
 #include <math.h>
 #include <time.h>
 #include <stdint.h>
-#include <protocol/protocol.pb.h>
+
+
+#include <protocol.pb.h>
 #include <publish_message.pb.h>
 #include <group_membership_message.pb.h>
 #include <subscribe_message.pb.h>
@@ -87,7 +89,9 @@ const char* getValueByKey(const tPayload *entriesPayload, const char *key){
         return NULL;
     }
 
-    const char *pos = entriesPayload->data;
+    char *pos;
+    memcpy(pos,entriesPayload->data,entriesPayload->size);
+    //const char *pos = entriesPayload->data;
     while ((uint8_t *)pos - entriesPayload->data < entriesPayload->size){
         if (pos[0] != 'k'){
             break;
@@ -122,7 +126,9 @@ const char* getValueByIndex(const tPayload *entriesPayload, const int index){
         return NULL;
     }
 
-    const char *pos = entriesPayload->data;
+    char *pos;
+    memcpy(pos,entriesPayload->data,entriesPayload->size);
+    //const char *pos = entriesPayload->data;
     int i = -1;
     while ((uint8_t *)pos - entriesPayload->data < entriesPayload->size){
         if (pos[0] != 'k'){
@@ -159,7 +165,9 @@ const char* getKeyByIndex(const tPayload *entriesPayload, const int index){
         return NULL;
     }
 
-    const char *pos = entriesPayload->data;
+    char *pos;
+    memcpy(pos,entriesPayload->data,entriesPayload->size);
+    //const char *pos = entriesPayload->data;
     int i = -1;
     while ((uint8_t *)pos - entriesPayload->data < entriesPayload->size){
         if (pos[0] != 'k'){
@@ -187,7 +195,9 @@ const char* getKeyByIndex(const tPayload *entriesPayload, const int index){
 
 bool encodeGroup(pb_ostream_t *stream, const pb_field_t *field, void * const *arg)
 {
-    Group *gr = *arg;
+    //(triangle*)malloc(n * sizeof(triangle));
+    //Group *gr = *arg;
+    Group *gr = (Group*) *arg;
 
     if (!pb_encode_tag_for_field(stream, field)){
         return false;
@@ -202,7 +212,8 @@ bool encodeGroup(pb_ostream_t *stream, const pb_field_t *field, void * const *ar
 
 bool decodeGroup(pb_istream_t *stream, const pb_field_t *field, void **arg)
 {
-    Group *gr = *arg;
+    Group *gr = (Group*) *arg;
+    //Group *gr = *arg;
 
     return pb_decode(stream, Group_fields, gr);
 }
@@ -213,7 +224,7 @@ bool encodeGroupMembership(pb_ostream_t *stream, const pb_field_t *field, void *
     pb_ostream_t gmStream = pb_ostream_from_buffer(gmBuffer, MSG_ENCODING_BUFFER_SIZE);
     gmStream.max_size = MSG_ENCODING_BUFFER_SIZE;
 
-    GroupMembership *gm = *arg;
+    GroupMembership *gm = (GroupMembership *) *arg;
 
     if (!pb_encode(&gmStream, GroupMembership_fields, gm)){
         return false;
@@ -228,7 +239,7 @@ bool encodeGroupMembership(pb_ostream_t *stream, const pb_field_t *field, void *
 
 bool decodeGroupMembership(pb_istream_t *stream, const pb_field_t *field, void **arg)
 {
-    GroupMembership *gm = *arg;
+    GroupMembership *gm = (GroupMembership *) *arg;
 
     return pb_decode(stream, GroupMembership_fields, gm);
 }
@@ -239,7 +250,7 @@ bool encodeGroupcast(pb_ostream_t *stream, const pb_field_t *field, void * const
     pb_ostream_t groupcastStm = pb_ostream_from_buffer(groupcastBuf, MSG_ENCODING_BUFFER_SIZE);
     groupcastStm.max_size = MSG_ENCODING_BUFFER_SIZE;
 
-    Groupcast *groupcastMsg = *arg;
+    Groupcast *groupcastMsg = (Groupcast *) *arg;
 
     if (!pb_encode(&groupcastStm, GroupMembership_fields, groupcastMsg)){
         return false;
@@ -258,7 +269,7 @@ bool encodeSubscriptionInformation(pb_ostream_t *stream, const pb_field_t *field
     pb_ostream_t siStm = pb_ostream_from_buffer(subBuf, MSG_ENCODING_BUFFER_SIZE);
     siStm.max_size = MSG_ENCODING_BUFFER_SIZE;
 
-    SubscribeInformation *si = *arg;
+    SubscribeInformation *si = (SubscribeInformation *) *arg;
 
     if (!pb_encode(&siStm, SubscribeInformation_fields, si)){
         return false;
@@ -277,7 +288,7 @@ bool encodeClientLibMessage(pb_ostream_t *stream, const pb_field_t *field, void 
     pb_ostream_t internalOutStream = pb_ostream_from_buffer(internalBuffer, MSG_ENCODING_BUFFER_SIZE);
     internalOutStream.max_size = MSG_ENCODING_BUFFER_SIZE;
 
-    ClientLibMessage *msg = *arg;
+    ClientLibMessage *msg = (ClientLibMessage *) *arg;
 
     if (!pb_encode(&internalOutStream, ClientLibMessage_fields, msg)){
         return false;
@@ -293,7 +304,7 @@ bool encodeClientLibMessage(pb_ostream_t *stream, const pb_field_t *field, void 
 bool encodeTagList(pb_ostream_t *stream, const pb_field_t *field, void * const *arg)
 {
     //array de strings
-    tArrayStrings *as = *arg;
+    tArrayStrings *as = (tArrayStrings *) *arg;
     int i;
 
     for(i = 0; i < as->q; i++){
@@ -312,7 +323,7 @@ bool encodeTagList(pb_ostream_t *stream, const pb_field_t *field, void * const *
 bool encodeSingleString(pb_ostream_t *stream, const pb_field_t *field, void * const *arg)
 {
     //array de strings
-    char *str = *arg;
+    char *str = (char *) *arg;
 
     if (!pb_encode_tag_for_field(stream, field)){
         return false;
@@ -322,7 +333,7 @@ bool encodeSingleString(pb_ostream_t *stream, const pb_field_t *field, void * co
 
 bool decodeSingleString(pb_istream_t *stream, const pb_field_t *field, void **arg)
 {
-    tPayload *payload = *arg;
+    tPayload *payload = (tPayload *) *arg;
     size_t left = stream->bytes_left;
 
     if (stream->bytes_left > payload->maxSize - 1)
@@ -339,13 +350,16 @@ bool decodeSingleString(pb_istream_t *stream, const pb_field_t *field, void **ar
 
 bool decodeAndAppendMapEntriesSingleString(pb_istream_t *stream, const pb_field_t *field, void **arg)
 {
-    tPayload *payload = *arg;
+    tPayload *payload = (tPayload *) *arg;
     size_t left = stream->bytes_left;
 
     if (left > (payload->maxSize - payload->size) - 3)
         return false;
 
-    char *endStr = &payload->data[payload->size];
+    char *endStr;
+    //ENDSTR?
+    memcpy(endStr,payload->data,payload->size+1);
+    //char *endStr = &payload->data[payload->size];
 
     if (payload->size != 0){ //se ja tem algo na string
         switch(field->tag){
@@ -371,13 +385,15 @@ bool decodeAndAppendMapEntriesSingleString(pb_istream_t *stream, const pb_field_
 
 bool decodeAndAppendMapEntriesString(pb_istream_t *stream, const pb_field_t *field, void **arg)
 {
-    tPayload *payload = *arg;
+    tPayload *payload = (tPayload *) *arg;
     size_t left = stream->bytes_left;
 
     if (left > (payload->maxSize - payload->size) - 3)
         return false;
-
-    char *endStr = &payload->data[payload->size];
+    //ENDSTR?
+    char *endStr;
+    memcpy(endStr,payload->data,payload->size+1);
+    //char *endStr = &payload->data[payload->size];
     if (payload->size > 0){
         endStr++;
         payload->size++;
@@ -408,8 +424,9 @@ bool appendToMapEntryString(tPayload *entriesPayload, const char *key, const cha
         //nao ha espaco
         return false;
     }
-
-    char *endStr = &entriesPayload->data[entriesPayload->size];
+    char *endStr;
+    memcpy(endStr,entriesPayload->data,entriesPayload->size);
+    //char *endStr = &entriesPayload->data[entriesPayload->size];
     if (entriesPayload->size > 0){
         endStr++;
         entriesPayload->size++;
@@ -436,14 +453,18 @@ bool appendToMapEntryString(tPayload *entriesPayload, const char *key, const cha
 
 bool decodeMapEntries(pb_istream_t *stream, const pb_field_t *field, void **arg)
 {
-    MapEntry *entry = *arg;
+    MapEntry *entry = (MapEntry *) *arg;
     return pb_decode(stream, MapEntry_fields, entry);
 }
 
 bool encodeMapEntries(pb_ostream_t *stream, const pb_field_t *field, void * const *arg)
 {
-    tPayload *dataPayload = *arg;
+    tPayload *dataPayload = (tPayload *) *arg;
+
+    //COMO OCORRE ESSA ATRIBUIÇÃO?
     const char *str = dataPayload->data, *k, *v;
+    
+    
     //return true caso tamanho zero?
 
     while((uint8_t*)str - dataPayload->data < dataPayload->size){
@@ -463,9 +484,11 @@ bool encodeMapEntries(pb_ostream_t *stream, const pb_field_t *field, void * cons
         //preencher MapEntry
         MapEntry mapEntry = MapEntry_init_default;
         mapEntry.key.funcs.encode = &encodeSingleString;
-        mapEntry.key.arg = k;
+        memcpy(mapEntry.key.arg,k,strlen(k)+1);
+        //mapEntry.key.arg = k;
         mapEntry.value.funcs.encode = &encodeSingleString;
-        mapEntry.value.arg = v;
+        memcpy(mapEntry.value.arg,v,strlen(v)+1);
+        //mapEntry.value.arg = v;
         //printf("montada MapEntry: %s=%s\n", k, v);
 
         //inserir na stream
@@ -487,7 +510,7 @@ bool encodeMapEntries(pb_ostream_t *stream, const pb_field_t *field, void * cons
 
 bool decodePayloadBytes(pb_istream_t *stream, const pb_field_t *field, void **arg)
 {
-    tPayload *payload = *arg;
+    tPayload *payload = (tPayload *) *arg;
     size_t left = stream->bytes_left;
 
     if (stream->bytes_left > payload->maxSize)
@@ -507,7 +530,7 @@ bool encodePublishInformation(pb_ostream_t *stream, const pb_field_t *field, voi
     pb_ostream_t gmStream = pb_ostream_from_buffer(gmBuffer, MSG_ENCODING_BUFFER_SIZE);
     gmStream.max_size = MSG_ENCODING_BUFFER_SIZE;
 
-    PublishInformation *pse = *arg;
+    PublishInformation *pse = (PublishInformation *) *arg;
 
     if (!pb_encode(&gmStream, PublishInformation_fields, pse)){
         return false;
@@ -694,7 +717,8 @@ static void publishInformation(const dyad_Stream *s, const char *topic, const ch
 
     //informacoes basicas
     info.informationClass.funcs.encode = &encodeSingleString;
-    info.informationClass.arg = topic;
+    memcpy(info.informationClass.arg,topic,strlen(topic)+1);
+    //info.informationClass.arg = topic;
     info.has_originUuid = true;
     info.originUuid.leastSignBits = myUuid.leastSignBits;
     info.originUuid.mostSignBits = myUuid.mostSignBits;
@@ -859,7 +883,8 @@ static void sendSubscriptionNotification(const dyad_Stream *s,  const char *topi
     SubscribeInformation subInfo = SubscribeInformation_init_default;
 
     subInfo.topic.funcs.encode = &encodeSingleString;
-    subInfo.topic.arg = topic;
+    memcpy(subInfo.topic.arg,topic,strlen(topic)+1);
+    //subInfo.topic.arg = topic;
 
     //encapsular numa clientlib message
     ClientLibMessage pubsubMsg = ClientLibMessage_init_default;
