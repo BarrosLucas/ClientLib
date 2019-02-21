@@ -89,9 +89,9 @@ const char* getValueByKey(const tPayload *entriesPayload, const char *key){
         return NULL;
     }
 
-    char *pos;
-    memcpy(pos,entriesPayload->data,entriesPayload->size);
-    //const char *pos = entriesPayload->data;
+    //char *pos;
+    //memcpy(pos,entriesPayload->data,entriesPayload->size);
+    const char *pos = (char *) entriesPayload->data;
     while ((uint8_t *)pos - entriesPayload->data < entriesPayload->size){
         if (pos[0] != 'k'){
             break;
@@ -126,9 +126,9 @@ const char* getValueByIndex(const tPayload *entriesPayload, const int index){
         return NULL;
     }
 
-    char *pos;
-    memcpy(pos,entriesPayload->data,entriesPayload->size);
-    //const char *pos = entriesPayload->data;
+    //char *pos;
+    //memcpy(pos,entriesPayload->data,entriesPayload->size);
+    const char *pos = (char *) entriesPayload->data;
     int i = -1;
     while ((uint8_t *)pos - entriesPayload->data < entriesPayload->size){
         if (pos[0] != 'k'){
@@ -165,9 +165,9 @@ const char* getKeyByIndex(const tPayload *entriesPayload, const int index){
         return NULL;
     }
 
-    char *pos;
-    memcpy(pos,entriesPayload->data,entriesPayload->size);
-    //const char *pos = entriesPayload->data;
+    //char *pos;
+    //memcpy(pos,entriesPayload->data,entriesPayload->size);
+    const char *pos = (char *) entriesPayload->data;
     int i = -1;
     while ((uint8_t *)pos - entriesPayload->data < entriesPayload->size){
         if (pos[0] != 'k'){
@@ -328,7 +328,7 @@ bool encodeSingleString(pb_ostream_t *stream, const pb_field_t *field, void * co
     if (!pb_encode_tag_for_field(stream, field)){
         return false;
     }
-    return pb_encode_string(stream, str, strlen(str));
+    return pb_encode_string(stream, (pb_byte_t *)str, strlen(str));
 }
 
 bool decodeSingleString(pb_istream_t *stream, const pb_field_t *field, void **arg)
@@ -356,10 +356,10 @@ bool decodeAndAppendMapEntriesSingleString(pb_istream_t *stream, const pb_field_
     if (left > (payload->maxSize - payload->size) - 3)
         return false;
 
-    char *endStr;
+    //char *endStr;
     //ENDSTR?
-    memcpy(endStr,payload->data,payload->size+1);
-    //char *endStr = &payload->data[payload->size];
+    //memcpy(endStr,payload->data,payload->size+1);
+    char *endStr = (char *) &payload->data[payload->size];
 
     if (payload->size != 0){ //se ja tem algo na string
         switch(field->tag){
@@ -374,7 +374,7 @@ bool decodeAndAppendMapEntriesSingleString(pb_istream_t *stream, const pb_field_
         payload->size++;
     }
 
-    if (!pb_read(stream, endStr, left))
+    if (!pb_read(stream, (pb_byte_t *) endStr, left))
         return false;
 
     endStr[left] = '\0';
@@ -391,9 +391,9 @@ bool decodeAndAppendMapEntriesString(pb_istream_t *stream, const pb_field_t *fie
     if (left > (payload->maxSize - payload->size) - 3)
         return false;
     //ENDSTR?
-    char *endStr;
-    memcpy(endStr,payload->data,payload->size+1);
-    //char *endStr = &payload->data[payload->size];
+    //char *endStr;
+    //memcpy(endStr,payload->data,payload->size+1);
+    char *endStr = (char *) &payload->data[payload->size];
     if (payload->size > 0){
         endStr++;
         payload->size++;
@@ -410,7 +410,7 @@ bool decodeAndAppendMapEntriesString(pb_istream_t *stream, const pb_field_t *fie
     endStr++;
     payload->size++;
 
-    if (!pb_read(stream, endStr, left))
+    if (!pb_read(stream,(pb_byte_t *) endStr, left))
         return false;
 
     endStr[left] = '\0';
@@ -424,9 +424,9 @@ bool appendToMapEntryString(tPayload *entriesPayload, const char *key, const cha
         //nao ha espaco
         return false;
     }
-    char *endStr;
-    memcpy(endStr,entriesPayload->data,entriesPayload->size);
-    //char *endStr = &entriesPayload->data[entriesPayload->size];
+    //char *endStr;
+    //memcpy(endStr,entriesPayload->data,entriesPayload->size);
+    char *endStr = (char *) &entriesPayload->data[entriesPayload->size];
     if (entriesPayload->size > 0){
         endStr++;
         entriesPayload->size++;
@@ -462,7 +462,7 @@ bool encodeMapEntries(pb_ostream_t *stream, const pb_field_t *field, void * cons
     tPayload *dataPayload = (tPayload *) *arg;
 
     //COMO OCORRE ESSA ATRIBUIÇÃO?
-    const char *str = dataPayload->data, *k, *v;
+    const char *str = (char *)dataPayload->data, *k, *v;
     
     
     //return true caso tamanho zero?
@@ -484,11 +484,11 @@ bool encodeMapEntries(pb_ostream_t *stream, const pb_field_t *field, void * cons
         //preencher MapEntry
         MapEntry mapEntry = MapEntry_init_default;
         mapEntry.key.funcs.encode = &encodeSingleString;
-        memcpy(mapEntry.key.arg,k,strlen(k)+1);
-        //mapEntry.key.arg = k;
+        //memcpy(mapEntry.key.arg,k,strlen(k)+1);
+        mapEntry.key.arg = (char *) k;
         mapEntry.value.funcs.encode = &encodeSingleString;
-        memcpy(mapEntry.value.arg,v,strlen(v)+1);
-        //mapEntry.value.arg = v;
+        //memcpy(mapEntry.value.arg,v,strlen(v)+1);
+        mapEntry.value.arg = (char *) v;
         //printf("montada MapEntry: %s=%s\n", k, v);
 
         //inserir na stream
@@ -548,7 +548,7 @@ static void decodePubSubEvent(char *data, int size){
 
     //string informationClass
     char informationClass[51];
-    tPayload strPayload = {informationClass, 51, 0};
+    tPayload strPayload = {(char *)informationClass, 51, 0};
     pubmsg.informationClass.funcs.decode = &decodeSingleString;
     pubmsg.informationClass.arg = &strPayload;
 
@@ -717,7 +717,8 @@ static void publishInformation(const dyad_Stream *s, const char *topic, const ch
 
     //informacoes basicas
     info.informationClass.funcs.encode = &encodeSingleString;
-    memcpy(info.informationClass.arg,topic,strlen(topic)+1);
+    //memcpy(info.informationClass.arg,topic,strlen(topic)+1);
+    info.informationClass.arg = (char *) topic;
     //info.informationClass.arg = topic;
     info.has_originUuid = true;
     info.originUuid.leastSignBits = myUuid.leastSignBits;
@@ -883,7 +884,8 @@ static void sendSubscriptionNotification(const dyad_Stream *s,  const char *topi
     SubscribeInformation subInfo = SubscribeInformation_init_default;
 
     subInfo.topic.funcs.encode = &encodeSingleString;
-    memcpy(subInfo.topic.arg,topic,strlen(topic)+1);
+    //memcpy(subInfo.topic.arg,topic,strlen(topic)+1);
+    subInfo.topic.arg = (char *) topic;
     //subInfo.topic.arg = topic;
 
     //encapsular numa clientlib message
