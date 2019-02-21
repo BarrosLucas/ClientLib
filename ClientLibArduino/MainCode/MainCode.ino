@@ -548,14 +548,14 @@ static void decodePubSubEvent(char *data, int size){
 
     //string informationClass
     char informationClass[51];
-    tPayload strPayload = {(char *)informationClass, 51, 0};
+    tPayload strPayload = {(uint8_t *)informationClass, 51, 0};
     pubmsg.informationClass.funcs.decode = &decodeSingleString;
     pubmsg.informationClass.arg = &strPayload;
 
     //informacoes
     MapEntry informationMapEntries = MapEntry_init_zero;
     char allInformation[size+size/2];
-    tPayload allInformationPayload = {allInformation, size, 0};
+    tPayload allInformationPayload = {(uint8_t *)allInformation, size, 0};
     informationMapEntries.key.funcs.decode = &decodeAndAppendMapEntriesString;
     informationMapEntries.key.arg = &allInformationPayload;
     informationMapEntries.value.funcs.decode = &decodeAndAppendMapEntriesString;
@@ -566,7 +566,7 @@ static void decodePubSubEvent(char *data, int size){
     //propriedades
     MapEntry propertiesMapEntries = MapEntry_init_zero;
     char allProperties[size+size/2];
-    tPayload allPropertiesPayload = {allProperties, size, 0};
+    tPayload allPropertiesPayload = {(uint8_t *)allProperties, size, 0};
     propertiesMapEntries.key.funcs.decode = &decodeAndAppendMapEntriesString;
     propertiesMapEntries.key.arg = &allPropertiesPayload;
     propertiesMapEntries.value.funcs.decode = &decodeAndAppendMapEntriesString;
@@ -575,7 +575,7 @@ static void decodePubSubEvent(char *data, int size){
     pubmsg.properties.entries.arg = &propertiesMapEntries;
 
 
-    pb_istream_t inStream = pb_istream_from_buffer(data, size);
+    pb_istream_t inStream = pb_istream_from_buffer((pb_byte_t *)data, size);
     if (!pb_decode(&inStream, PublishInformation_fields, &pubmsg)){
         printf("Erro decodificando PublishInformation: %s\n", inStream.errmsg);
         return;
@@ -632,11 +632,11 @@ static void decodeSubscriptionMessage(char *data, int size)
 {
     SubscribeInformation subscription = SubscribeInformation_init_zero;
     char topic[21];
-    tPayload topicPayload = { topic, 21, 0};
+    tPayload topicPayload = {(uint8_t *) topic, 21, 0};
     subscription.topic.funcs.decode = &decodeSingleString;
     subscription.topic.arg = &topicPayload;
 
-    pb_istream_t inStream = pb_istream_from_buffer(data, size);
+    pb_istream_t inStream = pb_istream_from_buffer((pb_byte_t *)data, size);
     if (!pb_decode(&inStream, SubscribeInformation_fields, &subscription)){
         printf("Erro decodificando subscription: %s\n", inStream.errmsg);
         return;
@@ -654,7 +654,7 @@ static void decodeGroupMembershipMessage(char *data, int size)
     groupMembership.groupsJoined.arg = &joinedGroup;
     groupMembership.groupsLeft.funcs.decode = &decodeGroup;
     groupMembership.groupsLeft.arg = &leftGroup;
-    pb_istream_t inStream = pb_istream_from_buffer(data, size);
+    pb_istream_t inStream = pb_istream_from_buffer((pb_byte_t *)data, size);
     if (!pb_decode(&inStream, GroupMembership_fields, &groupMembership)){
         printf("Erro decodificando groupmembership: %s\n", inStream.errmsg);
         return;
@@ -678,7 +678,7 @@ static void decodeProtocolMessage(char *data, int size)
     msg.contentPayload.funcs.decode = &decodePayloadBytes;
     msg.contentPayload.arg = &payload;
 
-    pb_istream_t inStream = pb_istream_from_buffer(data, size);
+    pb_istream_t inStream = pb_istream_from_buffer((pb_byte_t *)data, size);
     if (!pb_decode(&inStream, ClientLibMessage_fields, &msg)){
         printf("Erro decodificando mensagem recebida: %s\n", inStream.errmsg);
         return;
@@ -694,15 +694,15 @@ static void decodeProtocolMessage(char *data, int size)
     switch (msg.msgType){
         case MSGType_PUBSUBEVENT:
             puts("type is pubsub event");
-            decodePubSubEvent(payload.data, payload.size);
+            decodePubSubEvent((char *)payload.data, payload.size);
             break;
         case MSGType_SUBSCRIPTION:
             puts("type is subscription event");
-            decodeSubscriptionMessage(payload.data, payload.size);
+            decodeSubscriptionMessage((char *)payload.data, payload.size);
             break;
         case MSGType_GROUPMEMBERSHIP:
             puts("type is groupmembership");
-            decodeGroupMembershipMessage(payload.data, payload.size);
+            decodeGroupMembershipMessage((char *) payload.data, payload.size);
             break;
         default:
             printf("type of message not compatible\n");
@@ -727,7 +727,7 @@ static void publishInformation(const dyad_Stream *s, const char *topic, const ch
     //informacoes
     info.has_information = true;
     char allInformation[MAX_ENTRIES_STRSIZE];
-    tPayload allInformationPayload = {allInformation, MAX_ENTRIES_STRSIZE, 0};
+    tPayload allInformationPayload = {(uint8_t *)allInformation, MAX_ENTRIES_STRSIZE, 0};
     if (!appendToMapEntryString(&allInformationPayload, "main", mainValue)){
         printf("Error appending main value\n");
     }
@@ -742,7 +742,7 @@ static void publishInformation(const dyad_Stream *s, const char *topic, const ch
     //propriedades
     info.has_properties = true;
     char allProperties[MAX_ENTRIES_STRSIZE];
-    tPayload allPropertiesPayload = {allProperties, MAX_ENTRIES_STRSIZE, 0};
+    tPayload allPropertiesPayload = {(uint8_t *) allProperties, MAX_ENTRIES_STRSIZE, 0};
     char creationTimeStr[21];
     sprintf(creationTimeStr, "%d", creationTime);
     if (!appendToMapEntryString(&allPropertiesPayload, "creationTime", creationTimeStr)){
