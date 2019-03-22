@@ -1,0 +1,15 @@
+O foco principal é a nova biblioteca ConnectionNetWork...
+
+Na pasta:
+ConnectionNetworkWithoutLibrary -> há um código em arduino no qual
+é possível realizar o teste sem o uso da biblioteca.
+
+Na pasta:
+Libraries -> nela está nossa bibliteca e uma biblioteca chamada
+ArduinoThread, note que para o funcionamento adequado da
+biblioteca ConnectionNetwork, é necessário que ela esteja
+devidamente "instalada" no arduino.
+
+Na pasta:
+TestConnectionLib -> pode ser feito um pequeno teste que utiliza
+os comandos de nossa biblioteca

@@ -1,8 +1,8 @@
 #include <ESP8266WiFi.h>
 
 #ifndef STASSID
-#define STASSID "lucas"
-#define STAPSK  "senha123"
+#define STASSID "RESIDENCIA_LUCAS"
+#define STAPSK  "lucasfreitas115"
 #endif
 
 const char* ssid     = STASSID;
@@ -74,7 +74,7 @@ void loop() {
   // not testing 'client.connected()' since we do not need to send data here
   while (client.available()) {
     char ch = static_cast<char>(client.read());
-    Serial.println(ch);
+    Serial.print(ch);
   }
 
   // Close the connection
