@@ -20,7 +20,8 @@ public:
 	void networkConnect(const char* ssid, const char* password);
 	bool establishConnection(const char* host, const int port, void (*onConnect)());
 	void onDataCallback(void (*onData)(String data));
-	bool sendData(char * data);
+	bool sendData(const void *data, int size);
+	void closeConnection();
 	
 	static String readingData();
 

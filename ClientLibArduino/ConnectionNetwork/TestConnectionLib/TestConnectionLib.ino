@@ -1,10 +1,27 @@
 #include <ConnectionNetwork.h>
 
+typedef unsigned char BYTE;
+
 ConnectionNetwork connectionNetwork;
 bool connection;
 bool calledOnDataMethod = false;
 void onData(String data);
 void onConnect();
+void string2ByteArray(char* input, BYTE* output);
+
+void string2ByteArray(char* input, BYTE* output)
+{
+    int loop;
+    int i;
+    
+    loop = 0;
+    i = 0;
+    
+    while(input[loop] != '\0')
+    {
+        output[i++] = input[loop++];
+    }
+}
 
 void onData(String data){
   Serial.println("\nRecebeu");
@@ -18,7 +35,10 @@ void onData(String data){
 
 void onConnect(){
   Serial.println("Conectou");
-  if(connectionNetwork.sendData("hello from ESP8266")){
+  int len = strlen("hello from ESP8266");
+  BYTE arr[len];
+  string2ByteArray("hello from ESP8266", arr);
+  if(connectionNetwork.sendData(arr,len)){
     Serial.println("Enviado...");
   }else{
     Serial.println("Falha no envio");
@@ -42,6 +62,4 @@ void loop() {
     calledOnDataMethod = true;
     connectionNetwork.onDataCallback(onData);
   }
-  Serial.println("Passou 1s");
-  delay(1000);
 }

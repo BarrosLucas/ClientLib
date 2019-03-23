@@ -64,16 +64,29 @@ void ConnectionNetwork::onDataCallback(void (*onData)(String data)){
 
 /*
 PUBLIC
+FECHA A CONEXÃO 
+*/
+void ConnectionNetwork::closeConnection(){
+	client.stop();
+}
+
+/*
+PUBLIC
 ENVIA OS DADOS PARA O HOST NO QUAL ESTÁ CONECTADO
 PARAMETRO:
-const char[] data    -> Dado que será enviado
+const void *data    -> Recebe o array de bytes
+int size			-> Recebe o tamanho
 */
-bool ConnectionNetwork::sendData(char * data){
-	if (client.connected()) {
-    	client.println(data);
-    	return true; 					//ENVIA E RETURNA UM TRUE INDICANDO QUE O ENVIO TEVE SUCESSO
-  	}
-  	return false;						//RETORNA FALSE INDICANDO QUE O ENVIO NÃO TEVE SUCESSO
+bool ConnectionNetwork::sendData(const void *data, int size){
+	const char *p = (const char*) data;
+	if(client.connected()){
+		while (size--) {
+			client.write(p);
+			*p++;
+		}
+		return true;
+	}
+	return false;
 }
 
 
